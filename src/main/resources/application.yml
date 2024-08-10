@@ -14,3 +14,11 @@ spring:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
         database: postgresql
         database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+application:
+    security:
+        jwt:
+            secret-key: ${JWT_SECRET_KEY}
+            expiration: 86400000 # a day
+            refresh-token:
+                expiration: 604800000 # 7 days
