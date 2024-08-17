@@ -1,4 +1,4 @@
-package it.unical.inf.ea.sefora_backend.entities.user;
+package it.unical.inf.ea.sefora_backend.entities;
 
 import lombok.Builder;
 import lombok.Getter;

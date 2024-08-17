@@ -1,6 +1,6 @@
 package it.unical.inf.ea.sefora_backend.utils.audit;
 
-import it.unical.inf.ea.sefora_backend.entities.user.User;
+import it.unical.inf.ea.sefora_backend.entities.User;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -8,9 +8,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
-public class ApplicationAuditAware implements AuditorAware<Integer> {
+public class ApplicationAuditAware implements AuditorAware<Long> {
     @Override
-    public Optional<Integer> getCurrentAuditor() {
+    public Optional<Long> getCurrentAuditor() {
         Authentication authentication =
                 SecurityContextHolder
                         .getContext()

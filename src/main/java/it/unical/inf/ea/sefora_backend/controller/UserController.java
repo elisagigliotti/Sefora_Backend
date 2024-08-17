@@ -1,6 +1,6 @@
 package it.unical.inf.ea.sefora_backend.controller;
 
-import it.unical.inf.ea.sefora_backend.entities.user.ChangePasswordRequest;
+import it.unical.inf.ea.sefora_backend.entities.ChangePasswordRequest;
 import it.unical.inf.ea.sefora_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 

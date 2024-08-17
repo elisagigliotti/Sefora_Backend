@@ -1,6 +1,6 @@
 package it.unical.inf.ea.sefora_backend.utils.auth;
 
-import it.unical.inf.ea.sefora_backend.entities.user.Role;
+import it.unical.inf.ea.sefora_backend.entities.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

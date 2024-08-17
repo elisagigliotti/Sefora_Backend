@@ -1,6 +1,6 @@
 package it.unical.inf.ea.sefora_backend.entities.token;
 
-import it.unical.inf.ea.sefora_backend.entities.user.User;
+import it.unical.inf.ea.sefora_backend.entities.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +29,6 @@ public class Token {
     public boolean expired;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "s_users_id")
     public User user;
 }
