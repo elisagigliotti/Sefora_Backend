@@ -25,7 +25,7 @@ public class CartProductServiceImpl implements CartProductService {
 
     @Autowired
     private ModelMapper modelMapper;
-    
+
     @Autowired
     private ProductDao productDao;
 
