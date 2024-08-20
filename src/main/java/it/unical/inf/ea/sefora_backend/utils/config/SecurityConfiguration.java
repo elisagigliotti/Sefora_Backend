@@ -25,23 +25,22 @@ import static org.springframework.security.config.http.SessionCreationPolicy.IF_
 public class SecurityConfiguration {
 
     private static final String[] WHITE_LIST_URL = {
-            "/api/v1/auth/**",
             "/swagger-resources",
             "/swagger-resources/**",
             "/configuration/ui",
             "/configuration/security",
             "/swagger-ui/**",
+            "/v2/api-docs",
+            "/v3/api-docs",
+            "/v3/api-docs/**",
             "/webjars/**",
             "/swagger-ui.html",
             "/oauth2/authorization/google",
             "/login/oauth2/code/google",
-            "/api/product/**",
             "/api/product/all",
             "/api/product/user/**",
-            "api/v1/auth/register",
-            "api/v1/auth/authenticate",
-
-
+            "/api/users/**",
+            "/api/product/product/**",
     };
 
     private final JwtAuthenticationFilter jwtAuthFilter;

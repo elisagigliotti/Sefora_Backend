@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
