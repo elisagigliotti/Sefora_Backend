@@ -7,7 +7,6 @@ import it.unical.inf.ea.sefora_backend.dto.CartProductDto;
 import it.unical.inf.ea.sefora_backend.entities.Cart;
 import it.unical.inf.ea.sefora_backend.entities.CartProduct;
 import it.unical.inf.ea.sefora_backend.entities.Product;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +21,6 @@ public class CartProductServiceImpl implements CartProductService {
 
     @Autowired
     private CartProductDao cartProductDao;
-
-    @Autowired
-    private ModelMapper modelMapper;
 
     @Autowired
     private ProductDao productDao;

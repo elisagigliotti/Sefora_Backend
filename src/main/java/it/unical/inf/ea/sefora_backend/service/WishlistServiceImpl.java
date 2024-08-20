@@ -1,5 +1,6 @@
 package it.unical.inf.ea.sefora_backend.service;
 
+import it.unical.inf.ea.sefora_backend.dao.ProductDao;
 import it.unical.inf.ea.sefora_backend.dao.UserDao;
 import it.unical.inf.ea.sefora_backend.dao.WishlistDao;
 import it.unical.inf.ea.sefora_backend.dto.UserDto;
@@ -8,7 +9,6 @@ import it.unical.inf.ea.sefora_backend.dto.WishlistProductDto;
 import it.unical.inf.ea.sefora_backend.entities.User;
 import it.unical.inf.ea.sefora_backend.entities.Wishlist;
 import it.unical.inf.ea.sefora_backend.entities.WishlistProduct;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +18,13 @@ import java.util.List;
 public class WishlistServiceImpl implements WishlistService {
 
     @Autowired
-    private ModelMapper modelMapper;
-
-    @Autowired
     private WishlistDao wishlistDao;
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private ProductDao productDao;
 
     private WishlistDto convertToDto(Wishlist wishlist) {
         WishlistDto wishlistDto = new WishlistDto();
@@ -55,9 +55,34 @@ public class WishlistServiceImpl implements WishlistService {
         return wishlistDto;
     }
 
+    private Wishlist convertToEntity(WishlistDto wishlistDto) {
+        Wishlist wishlist = new Wishlist();
+        User user = userDao.findById(wishlistDto.getUserWishlistId())
+                .orElseThrow(() -> new RuntimeException("User not found!"));
+        wishlist.setUserWishlist(user);
+
+        for (WishlistProductDto wishlistProductDto : wishlistDto.getWishlistProducts()) {
+            WishlistProduct wishlistProduct = new WishlistProduct();
+            wishlistProduct.setProduct(productDao.findById(wishlistProductDto.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found!")));
+            wishlist.getWishlistProducts().add(wishlistProduct);
+        }
+
+        wishlist.setName(wishlistDto.getName());
+        wishlist.setType(wishlistDto.getType());
+
+        wishlist.setSharedWithUsers(userDao.findAllById(
+                wishlistDao.findBySharedWithUsers_Id(
+                        wishlistDto.getSharedWithUsers()
+                                .stream().map(UserDto::getId).toList())));
+
+        wishlist.setShareableLink(wishlistDto.getShareableLink());
+        return wishlist;
+    }
+
     @Override
     public WishlistDto createWishlist(WishlistDto wishlistDto) {
-        wishlistDao.save(modelMapper.map(wishlistDto, Wishlist.class));
+        wishlistDao.save(convertToEntity(wishlistDto));
         return wishlistDto;
     }
 
@@ -65,7 +90,21 @@ public class WishlistServiceImpl implements WishlistService {
     public void updateWishlist(WishlistDto wishlistDto) {
         Wishlist existingWishlist = wishlistDao.findById(wishlistDto.getId())
                 .orElseThrow(() -> new RuntimeException("Wishlist not found!"));
-        modelMapper.map(wishlistDto, existingWishlist);
+        existingWishlist.setName(wishlistDto.getName());
+        existingWishlist.setType(wishlistDto.getType());
+        existingWishlist.setShareableLink(wishlistDto.getShareableLink());
+        existingWishlist.setSharedWithUsers(userDao.findAllById(
+                wishlistDao.findBySharedWithUsers_Id(
+                        wishlistDto.getSharedWithUsers()
+                                .stream().map(UserDto::getId).toList())));
+        existingWishlist.setWishlistProducts(wishlistDto.getWishlistProducts()
+                .stream().map(wishlistProductDto -> {
+                    WishlistProduct wishlistProduct = new WishlistProduct();
+                    wishlistProduct.setProduct(productDao.findById(wishlistProductDto.getProductId())
+                            .orElseThrow(() -> new RuntimeException("Product not found!")));
+                    return wishlistProduct;
+                }).toList());
+        existingWishlist.setId(wishlistDto.getId());
         wishlistDao.save(existingWishlist);
     }
 

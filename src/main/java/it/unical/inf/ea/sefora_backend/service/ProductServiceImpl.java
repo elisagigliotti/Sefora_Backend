@@ -85,7 +85,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductDto getProductById(Long id) {
         Product product = productDao.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found!"));
-        return modelMapper.map(product, ProductDto.class);
+        return convertToDto(product);
     }
 
     @Override

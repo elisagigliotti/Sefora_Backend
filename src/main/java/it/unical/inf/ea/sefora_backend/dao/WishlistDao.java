@@ -10,4 +10,6 @@ public interface WishlistDao extends JpaRepository<Wishlist, Long> {
     List<Wishlist> findAllByUserWishlist_Id(Long userId);
 
     Optional<Wishlist> findById(Long id);
+
+    Iterable<Long> findBySharedWithUsers_Id(List<Long> list);
 }
