@@ -20,9 +20,9 @@ public class AuditAspect {
 
         String email = (String) joinPoint.getArgs()[0];
         String action = auditable.action();
-        String details =
+        String details = (String) joinPoint.getArgs()[1];
 
-                auditLogService.log(email, action, details);
+        auditLogService.log(email, action, details);
 
         return result;
     }
