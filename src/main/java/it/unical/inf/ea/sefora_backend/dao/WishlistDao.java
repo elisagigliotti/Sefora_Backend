@@ -1,6 +1,7 @@
 package it.unical.inf.ea.sefora_backend.dao;
 
 import it.unical.inf.ea.sefora_backend.entities.Wishlist;
+import it.unical.inf.ea.sefora_backend.entities.WishlistType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
