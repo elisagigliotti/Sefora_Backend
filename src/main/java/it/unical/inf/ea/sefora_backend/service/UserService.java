@@ -72,6 +72,7 @@ public class UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
+                .banned(false)
                 .build();
         var savedUser = dao.save(user);
         var jwtToken = jwtService.generateToken(user);
