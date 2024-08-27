@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import static it.unical.inf.ea.sefora_backend.entities.Permission.*;
 
 
+@Getter
 @RequiredArgsConstructor
 public enum Role {
 
@@ -21,23 +22,10 @@ public enum Role {
                     ADMIN_READ,
                     ADMIN_UPDATE,
                     ADMIN_DELETE,
-                    ADMIN_CREATE,
-                    MANAGER_READ,
-                    MANAGER_UPDATE,
-                    MANAGER_DELETE,
-                    MANAGER_CREATE
-            )
-    ),
-    MANAGER(
-            Set.of(
-                    MANAGER_READ,
-                    MANAGER_UPDATE,
-                    MANAGER_DELETE,
-                    MANAGER_CREATE
+                    ADMIN_CREATE
             )
     );
 
-    @Getter
     private final Set<Permission> permissions;
 
     public List<SimpleGrantedAuthority> getAuthorities() {

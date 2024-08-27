@@ -1,6 +1,7 @@
 package it.unical.inf.ea.sefora_backend.utils.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import it.unical.inf.ea.sefora_backend.dto.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,4 +17,8 @@ public class AuthenticationResponse {
     private String accessToken;
     @JsonProperty("refresh_token")
     private String refreshToken;
+    @JsonProperty("user")
+    private UserDto user;
+    @JsonProperty("expires_in")
+    private Long expiresIn;
 }

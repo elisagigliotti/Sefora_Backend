@@ -5,12 +5,15 @@ import it.unical.inf.ea.sefora_backend.dao.ProductDao;
 import it.unical.inf.ea.sefora_backend.dao.UserDao;
 import it.unical.inf.ea.sefora_backend.dto.CartDto;
 import it.unical.inf.ea.sefora_backend.dto.CartProductDto;
+import it.unical.inf.ea.sefora_backend.dto.OrderDto;
 import it.unical.inf.ea.sefora_backend.entities.Cart;
 import it.unical.inf.ea.sefora_backend.entities.CartProduct;
 import it.unical.inf.ea.sefora_backend.entities.Product;
 import it.unical.inf.ea.sefora_backend.entities.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.security.Principal;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -23,6 +26,12 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private ProductDao productDao;
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private UserService userService;
 
     private CartDto convertToDto(Cart cart) {
         CartDto cartDto = new CartDto();
@@ -78,6 +87,12 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    public CartDto getCurrentUserCart(Principal currentUser) {
+        var User = userService.getConnectedUser(currentUser);
+        return getCartByUserId(User.getId());
+    }
+
+    @Override
     public void updateCart(CartDto cartDto) {
         if (cartDao.findById(cartDto.getId()).isEmpty())
             throw new RuntimeException("Cart not found!");
@@ -89,5 +104,10 @@ public class CartServiceImpl implements CartService {
         return cartDao.findById(id)
                 .map(this::convertToDto)
                 .orElseThrow(() -> new RuntimeException("Cart not found!"));
+    }
+
+    @Override
+    public OrderDto createOrder(OrderDto orderDto) {
+        return orderService.createOrder(orderDto);
     }
 }

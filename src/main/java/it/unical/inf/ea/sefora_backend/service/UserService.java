@@ -3,6 +3,7 @@ package it.unical.inf.ea.sefora_backend.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unical.inf.ea.sefora_backend.dao.TokenDao;
 import it.unical.inf.ea.sefora_backend.dao.UserDao;
+import it.unical.inf.ea.sefora_backend.dto.UserDto;
 import it.unical.inf.ea.sefora_backend.entities.ChangePasswordRequest;
 import it.unical.inf.ea.sefora_backend.entities.User;
 import it.unical.inf.ea.sefora_backend.entities.token.Token;
@@ -32,6 +33,17 @@ public class UserService {
     private final TokenDao tokenDao;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+
+    private UserDto convertToDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setFirstname(user.getFirstname());
+        userDto.setLastname(user.getLastname());
+        userDto.setEmail(user.getEmail());
+        userDto.setRole(user.getRole());
+        userDto.setBanned(user.getBanned());
+        return userDto;
+    }
 
     public void changePassword(ChangePasswordRequest request, Principal connectedUser) {
 
@@ -81,6 +93,8 @@ public class UserService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .user(convertToDto(savedUser))
+                .expiresIn(jwtService.getJwtDateExpiration())
                 .build();
     }
 
@@ -100,6 +114,8 @@ public class UserService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .user(convertToDto(user))
+                .expiresIn(jwtService.getJwtDateExpiration())
                 .build();
     }
 
@@ -153,4 +169,49 @@ public class UserService {
         }
     }
 
+    public void updateUser(UserDto request, Principal connectedUser) {
+        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        user.setFirstname(request.getFirstname());
+        user.setLastname(request.getLastname());
+        user.setEmail(request.getEmail());
+        user.setRole(request.getRole());
+        user.setBanned(request.getBanned());
+        dao.save(user);
+    }
+
+    public void logout(Principal connectedUser) {
+        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        revokeAllUserTokens(user);
+    }
+
+    public UserDto getConnectedUser(Principal connectedUser) {
+        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        return convertToDto(user);
+    }
+
+    public void banUser(Long userId) {
+        var user = dao.findById(userId)
+                .orElseThrow();
+        user.setBanned(true);
+        dao.save(user);
+    }
+
+    public void unbanUser(Long userId) {
+        var user = dao.findById(userId)
+                .orElseThrow();
+        user.setBanned(false);
+        dao.save(user);
+    }
+
+    public void deleteUser(Long userId) {
+        var user = dao.findById(userId)
+                .orElseThrow();
+        dao.delete(user);
+    }
+
+    public UserDto getUserById(Long userId) {
+        var user = dao.findById(userId)
+                .orElseThrow();
+        return convertToDto(user);
+    }
 }

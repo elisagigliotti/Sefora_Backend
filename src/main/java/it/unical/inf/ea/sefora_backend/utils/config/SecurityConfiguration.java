@@ -13,6 +13,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.security.config.Customizer.withDefaults;
@@ -25,6 +27,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.IF_
 public class SecurityConfiguration {
 
     private static final String[] WHITE_LIST_URL = {
+            "/api/**",
             "/swagger-resources",
             "/swagger-resources/**",
             "/configuration/ui",
@@ -66,7 +69,12 @@ public class SecurityConfiguration {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(UNAUTHORIZED))
                 )
-                .oauth2Login(withDefaults());
+                .oauth2Login(oauth2 -> oauth2
+                        .defaultSuccessUrl("/api/users/login-success", true)
+                        .failureUrl("/api/users/login-failure")
+                        .successHandler(new SimpleUrlAuthenticationSuccessHandler("/api/users/login-success"))
+                        .failureHandler(new SimpleUrlAuthenticationFailureHandler("/api/users/login-failure"))
+                );
         return http.build();
     }
 }

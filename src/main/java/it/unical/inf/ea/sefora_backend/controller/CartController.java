@@ -1,11 +1,14 @@
 package it.unical.inf.ea.sefora_backend.controller;
 
 import it.unical.inf.ea.sefora_backend.dto.CartDto;
+import it.unical.inf.ea.sefora_backend.dto.OrderDto;
 import it.unical.inf.ea.sefora_backend.service.CartService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/cart")
@@ -28,5 +31,15 @@ public class CartController {
     @GetMapping("/{id}")
     public ResponseEntity<CartDto> getCartById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(cartService.getCartById(id));
+    }
+
+    @PostMapping("/create-order")
+    public ResponseEntity<OrderDto> createOrder(@RequestBody @Valid OrderDto orderDto) {
+        return ResponseEntity.ok(cartService.createOrder(orderDto));
+    }
+
+    @GetMapping("/current")
+    public ResponseEntity<CartDto> getCurrentUserCart(Principal connectedUser) {
+        return ResponseEntity.ok(cartService.getCurrentUserCart(connectedUser));
     }
 }

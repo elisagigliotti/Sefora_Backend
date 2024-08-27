@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -23,6 +24,12 @@ public class OrderController {
     @GetMapping("/user/{id}")
     public ResponseEntity<List<OrderDto>> findOrdersbyUserId(@PathVariable("id") Long id) {
         List<OrderDto> orderDtos = orderService.findOrdersByUserId(id);
+        return (orderDtos != null && !orderDtos.isEmpty()) ? ResponseEntity.ok(orderDtos) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/current")
+    public ResponseEntity<List<OrderDto>> findOrdersByCurrentUser(Principal currentUser) {
+        List<OrderDto> orderDtos = orderService.findOrdersByCurrentUser();
         return (orderDtos != null && !orderDtos.isEmpty()) ? ResponseEntity.ok(orderDtos) : ResponseEntity.notFound().build();
     }
 }
