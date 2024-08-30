@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Constraint(validatedBy = {EmailAndPasswordValidator.class})
-@Target({ElementType.TYPE, ElementType.FIELD, ElementType.PARAMETER})
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidEmailAndPassword {
 
@@ -19,7 +19,6 @@ public @interface ValidEmailAndPassword {
 
     Class<? extends Payload>[] payload() default {};
 
-    boolean validateEmail() default true;
-
-    boolean validatePassword() default true;
+    boolean checkEmail() default true;
+    boolean checkPassword() default true;
 }

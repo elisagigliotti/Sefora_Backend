@@ -1,41 +1,41 @@
 package it.unical.inf.ea.sefora_backend.utils.validation;
 
-
-import it.unical.inf.ea.sefora_backend.dto.UserDto;
+import it.unical.inf.ea.sefora_backend.utils.auth.RegisterRequest;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class EmailAndPasswordValidator implements ConstraintValidator<ValidEmailAndPassword, UserDto> {
+public class EmailAndPasswordValidator implements ConstraintValidator<ValidEmailAndPassword, RegisterRequest> {
 
-    private boolean validateEmail;
-    private boolean validatePassword;
+    private boolean checkEmail;
+    private boolean checkPassword;
 
     @Override
     public void initialize(ValidEmailAndPassword constraintAnnotation) {
-        this.validateEmail = constraintAnnotation.validateEmail();
-        this.validatePassword = constraintAnnotation.validatePassword();
+        this.checkEmail = constraintAnnotation.checkEmail();
+        this.checkPassword = constraintAnnotation.checkPassword();
     }
 
     @Override
-    public boolean isValid(UserDto userDto, ConstraintValidatorContext context) {
+    public boolean isValid(RegisterRequest registerRequest, ConstraintValidatorContext context) {
         boolean valid = true;
 
-        if (validateEmail) {
-            valid = isValidEmail(userDto.getEmail());
-            if (!valid) {
+        if (checkEmail) {
+            if (!isValidEmail(registerRequest.getEmail())) {
+                context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate("Invalid email format")
                         .addPropertyNode("email")
                         .addConstraintViolation();
+                valid = false;
             }
         }
 
-        if (validatePassword) {
-            boolean passwordValid = isValidPassword(userDto.getPassword());
-            valid = valid && passwordValid;
-            if (!passwordValid) {
+        if (checkPassword) {
+            if (!isValidPassword(registerRequest.getPassword())) {
+                context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate("Invalid password format")
                         .addPropertyNode("password")
                         .addConstraintViolation();
+                valid = false;
             }
         }
 
