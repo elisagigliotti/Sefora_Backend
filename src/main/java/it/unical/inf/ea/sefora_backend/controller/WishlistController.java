@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -17,19 +18,19 @@ public class WishlistController {
     private WishlistService wishlistService;
 
     @PostMapping
-    public ResponseEntity<WishlistDto> createWishlist(@RequestBody @Valid WishlistDto wishlistDto) {
-        return ResponseEntity.ok(wishlistService.createWishlist(wishlistDto));
+    public ResponseEntity<WishlistDto> createWishlist(@RequestBody @Valid WishlistDto wishlistDto, Principal currentUser) {
+        return ResponseEntity.ok(wishlistService.createWishlist(wishlistDto, currentUser));
     }
 
     @PutMapping
-    public ResponseEntity<String> updateWishlist(@RequestBody @Valid WishlistDto wishlistDto) {
-        wishlistService.updateWishlist(wishlistDto);
+    public ResponseEntity<String> updateWishlist(@RequestBody @Valid WishlistDto wishlistDto, Principal currentUser) {
+        wishlistService.updateWishlist(wishlistDto, currentUser);
         return ResponseEntity.ok("Wishlist updated!");
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteWishlist(@PathVariable("id") Long id) {
-        wishlistService.deleteWishlist(id);
+    public ResponseEntity<String> deleteWishlist(@PathVariable("id") Long id, Principal currentUser) {
+        wishlistService.deleteWishlist(id, currentUser);
         return ResponseEntity.ok("Wishlist deleted!");
     }
 
@@ -38,8 +39,37 @@ public class WishlistController {
         return ResponseEntity.ok(wishlistService.getWishlistById(id));
     }
 
-    @GetMapping("/user/{id}")
-    public ResponseEntity<List<WishlistDto>> getWishlistsByOwner(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(wishlistService.getWishlistsByOwner(id));
+    @GetMapping("/current")
+    public ResponseEntity<List<WishlistDto>> getCurrentUserWishlists(Principal currentUser) {
+        return ResponseEntity.ok(wishlistService.getCurrentUserWishlist(currentUser));
+    }
+
+    @GetMapping("/shared")
+    public ResponseEntity<List<WishlistDto>> getSharedWishlists(Principal currentUser) {
+        return ResponseEntity.ok(wishlistService.getSharedWishlists(currentUser));
+    }
+
+    @PatchMapping("/addUser")
+    public ResponseEntity<String> addUserToWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("userId") Long userId, Principal currentUser) {
+        wishlistService.addUserToWishlist(wishlistId, userId, currentUser);
+        return ResponseEntity.ok("User added to wishlist!");
+    }
+
+    @PatchMapping("/removeUser")
+    public ResponseEntity<String> removeUserFromWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("userId") Long userId, Principal currentUser) {
+        wishlistService.removeUserFromWishlist(wishlistId, userId, currentUser);
+        return ResponseEntity.ok("User removed from wishlist!");
+    }
+
+    @PatchMapping("/addProduct")
+    public ResponseEntity<String> addProductToWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("productId") Long productId, Principal currentUser) {
+        wishlistService.addProductToWishlist(wishlistId, productId, currentUser);
+        return ResponseEntity.ok("Product added to wishlist!");
+    }
+
+    @PatchMapping("/removeProduct")
+    public ResponseEntity<String> removeProductFromWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("productId") Long productId, Principal currentUser) {
+        wishlistService.removeProductFromWishlist(wishlistId, productId, currentUser);
+        return ResponseEntity.ok("Product removed from wishlist!");
     }
 }

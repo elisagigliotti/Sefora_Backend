@@ -1,28 +1,26 @@
 package it.unical.inf.ea.sefora_backend.entities;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import it.unical.inf.ea.sefora_backend.entities.token.Token;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
 
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "s_users")
+@ToString(exclude = {"cart", "wishlists", "orders", "products"})
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
@@ -32,7 +30,7 @@ public class User implements UserDetails {
     @Column(name = "lastname")
     private String lastname;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email;
 
     @Column(name = "password")
@@ -52,33 +50,21 @@ public class User implements UserDetails {
     @Column(name = "profile_image")
     private String profileImage;
 
-    @OneToMany(mappedBy = "user")
-    private List<Token> tokens;
-
-    //Mapping carrello
     @JsonManagedReference
-    @OneToOne(mappedBy = "userCart", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "userProduct", cascade = CascadeType.ALL)
+    private List<Product> products;
+
+    @JsonManagedReference
+    @OneToOne(mappedBy = "userCart", cascade = CascadeType.ALL)
     private Cart cart;
 
-    //Mapping wishlist
+    @JsonManagedReference
+    @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL)
+    private List<Order> orders;
+
     @JsonManagedReference
     @ManyToMany(mappedBy = "sharedWithUsers")
     private List<Wishlist> wishlists;
-
-    //Mapping ordini
-    @JsonManagedReference
-    @OneToMany(mappedBy = "userOrder", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private List<Order> orders;
-
-    //Mapping indirizzo
-    @JsonManagedReference
-    @OneToOne(mappedBy = "userAddress", cascade = CascadeType.REMOVE)
-    private Address address;
-
-    //Mapping prodotti
-    @JsonManagedReference
-    @OneToMany(mappedBy = "userProduct", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private List<Product> products;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -109,4 +95,6 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return UserDetails.super.isEnabled() && !banned;
     }
+
+
 }

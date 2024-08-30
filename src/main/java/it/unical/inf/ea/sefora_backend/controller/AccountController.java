@@ -1,13 +1,14 @@
 package it.unical.inf.ea.sefora_backend.controller;
 
-import it.unical.inf.ea.sefora_backend.dto.UserDto;
+import it.unical.inf.ea.sefora_backend.dto.AccountDto;
 import it.unical.inf.ea.sefora_backend.entities.ChangePasswordRequest;
-import it.unical.inf.ea.sefora_backend.service.UserService;
+import it.unical.inf.ea.sefora_backend.service.AccountService;
 import it.unical.inf.ea.sefora_backend.utils.auth.AuthenticationRequest;
 import it.unical.inf.ea.sefora_backend.utils.auth.AuthenticationResponse;
 import it.unical.inf.ea.sefora_backend.utils.auth.RegisterRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,23 +19,23 @@ import java.io.IOException;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/account")
 @RequiredArgsConstructor
-public class UserController {
+public class AccountController {
 
-    private final UserService service;
-
+    private final AccountService service;
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
-            @RequestBody RegisterRequest request
+            @RequestBody @Valid RegisterRequest request
     ) {
         return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
-            @RequestBody AuthenticationRequest request
+            @RequestBody AuthenticationRequest request,
+            Principal connectedUser
     ) {
         return ResponseEntity.ok(service.authenticate(request));
     }
@@ -68,7 +69,7 @@ public class UserController {
 
     @PutMapping
     public ResponseEntity<?> updateUser(
-            @RequestBody UserDto request,
+            @RequestBody AccountDto request,
             Principal connectedUser
     ) {
         service.updateUser(request, connectedUser);
@@ -81,27 +82,44 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<UserDto> getConnectedUser(Principal connectedUser) {
+    @GetMapping("/current")
+    public ResponseEntity<AccountDto> getConnectedUser(Principal connectedUser) {
         return ResponseEntity.ok(service.getConnectedUser(connectedUser));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/ban/{userId}")
     public ResponseEntity<?> banUser(
-            @PathVariable Long userId
+            @PathVariable Long userId,
+            Principal connectedUser
     ) {
-        service.banUser(userId);
+        service.banUser(userId, connectedUser);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/unban/{userId}")
     public ResponseEntity<?> unbanUser(
-            @PathVariable Long userId
+            @PathVariable Long userId,
+            Principal connectedUser
     ) {
-        service.unbanUser(userId);
+        service.unbanUser(userId, connectedUser);
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/delete/{userId}")
+    public ResponseEntity<?> deleteUser(
+            @PathVariable Long userId
+    ) {
+        service.deleteUser(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<AccountDto> getUserById(
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(service.getUserById(userId));
+    }
 }

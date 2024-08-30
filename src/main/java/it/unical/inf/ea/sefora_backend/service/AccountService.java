@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unical.inf.ea.sefora_backend.dao.TokenDao;
 import it.unical.inf.ea.sefora_backend.dao.UserDao;
 import it.unical.inf.ea.sefora_backend.dto.UserDto;
+import it.unical.inf.ea.sefora_backend.entities.Account;
 import it.unical.inf.ea.sefora_backend.entities.ChangePasswordRequest;
-import it.unical.inf.ea.sefora_backend.entities.User;
 import it.unical.inf.ea.sefora_backend.entities.token.Token;
 import it.unical.inf.ea.sefora_backend.entities.token.TokenType;
 import it.unical.inf.ea.sefora_backend.utils.auth.AuthenticationRequest;
@@ -14,6 +14,7 @@ import it.unical.inf.ea.sefora_backend.utils.auth.RegisterRequest;
 import it.unical.inf.ea.sefora_backend.utils.config.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,20 +35,20 @@ public class UserService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    private UserDto convertToDto(User user) {
+    static UserDto convertToDto(Account account) {
         UserDto userDto = new UserDto();
-        userDto.setId(user.getId());
-        userDto.setFirstname(user.getFirstname());
-        userDto.setLastname(user.getLastname());
-        userDto.setEmail(user.getEmail());
-        userDto.setRole(user.getRole());
-        userDto.setBanned(user.getBanned());
+        userDto.setId(account.getId());
+        userDto.setFirstname(account.getFirstname());
+        userDto.setLastname(account.getLastname());
+        userDto.setEmail(account.getEmail());
+        userDto.setRole(account.getRole());
+        userDto.setBanned(account.getBanned());
         return userDto;
     }
 
-    public void changePassword(ChangePasswordRequest request, Principal connectedUser) {
+    public void changePassword(ChangePasswordRequest request, Principal currentUser) {
 
-        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
 
         // check if the current password is correct
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
@@ -78,7 +79,7 @@ public class UserService {
     }
 
     public AuthenticationResponse register(RegisterRequest request) {
-        var user = User.builder()
+        var user = Account.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
                 .email(request.getEmail())
@@ -119,9 +120,9 @@ public class UserService {
                 .build();
     }
 
-    private void saveUserToken(User user, String jwtToken) {
+    private void saveUserToken(Account account, String jwtToken) {
         var token = Token.builder()
-                .user(user)
+                .account(account)
                 .token(jwtToken)
                 .tokenType(TokenType.BEARER)
                 .expired(false)
@@ -130,8 +131,8 @@ public class UserService {
         tokenDao.save(token);
     }
 
-    private void revokeAllUserTokens(User user) {
-        var validUserTokens = tokenDao.findAllValidTokenByUser(user.getId());
+    private void revokeAllUserTokens(Account account) {
+        var validUserTokens = tokenDao.findAllValidTokenByAccount(account.getId());
         if (validUserTokens.isEmpty())
             return;
         validUserTokens.forEach(token -> {
@@ -170,7 +171,7 @@ public class UserService {
     }
 
     public void updateUser(UserDto request, Principal connectedUser) {
-        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        var user = (Account) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setEmail(request.getEmail());
@@ -180,32 +181,44 @@ public class UserService {
     }
 
     public void logout(Principal connectedUser) {
-        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        var user = (Account) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         revokeAllUserTokens(user);
     }
 
     public UserDto getConnectedUser(Principal connectedUser) {
-        var user = (User) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        var user = (Account) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         return convertToDto(user);
     }
 
-    public void banUser(Long userId) {
+    public void banUser(Long userId, Principal connectedUser) {
+        var user1 = (Account) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        if(user1.getId().equals(userId)){
+            throw new RuntimeException("You can't ban yourself!");
+        }
         var user = dao.findById(userId)
                 .orElseThrow();
         user.setBanned(true);
         dao.save(user);
     }
 
-    public void unbanUser(Long userId) {
+    public void unbanUser(Long userId, Principal connectedUser) {
+        var user1 = (Account) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
+        if(user1.getId().equals(userId)){
+            throw new RuntimeException("You can't unban yourself!");
+        }
         var user = dao.findById(userId)
                 .orElseThrow();
         user.setBanned(false);
         dao.save(user);
     }
 
+    @Transactional
     public void deleteUser(Long userId) {
         var user = dao.findById(userId)
                 .orElseThrow();
+        //devo eliminare tutti i token quando elimino un utente senno
+        //ERROR: update or delete on table "s_users" violates foreign key constraint "fkad7iy5w5lcn120sxxnl1khhcf" on table "token"
+        tokenDao.deleteByAccount_Id(userId);
         dao.delete(user);
     }
 
