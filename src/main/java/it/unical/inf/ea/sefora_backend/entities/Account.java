@@ -9,15 +9,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+@Entity
+@Builder
 @Getter
 @Setter
+@Table(name = "account")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Entity
-@Table(name = "s_users")
-@ToString(exclude = {"cart", "wishlists", "orders", "products"})
-public class User implements UserDetails {
+public class Account implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,20 +50,20 @@ public class User implements UserDetails {
     private String profileImage;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "userProduct", cascade = CascadeType.ALL)
-    private List<Product> products;
+    @OneToMany(mappedBy = "productAccount", cascade = CascadeType.ALL)
+    private List<Product> accountProducts;
 
     @JsonManagedReference
-    @OneToOne(mappedBy = "userCart", cascade = CascadeType.ALL)
-    private Cart cart;
+    @OneToOne(mappedBy = "cartAccount", cascade = CascadeType.ALL)
+    private Cart accountCart;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL)
-    private List<Order> orders;
+    @OneToMany(mappedBy = "purchaseAccount", cascade = CascadeType.ALL) // Changed 'orderAccount' to 'purchaseAccount'
+    private List<Purchase> accountPurchases;  // Changed 'accountOrders' to 'accountPurchases'
 
     @JsonManagedReference
-    @ManyToMany(mappedBy = "sharedWithUsers")
-    private List<Wishlist> wishlists;
+    @OneToMany(mappedBy = "wishlistAccount", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Wishlist> accountWishlists;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -95,6 +94,4 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return UserDetails.super.isEnabled() && !banned;
     }
-
-
 }

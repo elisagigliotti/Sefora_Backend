@@ -1,17 +1,16 @@
 package it.unical.inf.ea.sefora_backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Table(name = "s_product")
-@Data
+@Entity
+@Table(name = "product")
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,8 +37,22 @@ public class Product {
     @Column(name = "imageProduct")
     private String imageProduct;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "s_users_id")
-    private User userProduct;
+    @JoinColumn(name = "cart_id")
+    private Cart cart;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "productAccount")
+    private Account productAccount;
+
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "purchase_id")
+    private Purchase productPurchase;
+
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wishlist_id")
+    private Wishlist wishlist;
 }

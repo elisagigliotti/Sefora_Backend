@@ -1,27 +1,35 @@
 package it.unical.inf.ea.sefora_backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
 @Entity
-@Table(name = "s_wishlist")
-@Data
+@Table(name = "wishlist")
+@Getter
+@Setter
 @NoArgsConstructor
 public class Wishlist {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "s_user_wishlist_id", nullable = false)
-    private User userWishlist;
+    @JsonManagedReference
+    @OneToMany(mappedBy = "wishlist", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    private List<Product> wishlistProducts;
 
-    @OneToMany(mappedBy = "wishlist", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<WishlistProduct> wishlistProducts;
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wishlist_account_id", nullable = false)
+    private Account wishlistAccount;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -30,14 +38,26 @@ public class Wishlist {
     @Enumerated(EnumType.STRING)
     private WishlistType type;
 
+    @JsonManagedReference
     @ManyToMany
     @JoinTable(
-            name = "s_wishlist_shared_users",
-            joinColumns = @JoinColumn(name = "s_wishlist_id"),
-            inverseJoinColumns = @JoinColumn(name = "s_users_id")
+            name = "wishlist_shared_users",
+            joinColumns = @JoinColumn(name = "wishlist_id"),
+            inverseJoinColumns = @JoinColumn(name = "account_id")
     )
-    private List<User> sharedWithUsers;
+    private List<Account> sharedWithUsers;
 
-    @Column(name = "shareable_link")
-    private String shareableLink;
+    public void addProduct(Product product) {
+        wishlistProducts.add(product);
+        if (product.getWishlist() != this) {
+            product.setWishlist(this);
+        }
+    }
+
+    public void removeProduct(Product product) {
+        wishlistProducts.remove(product);
+        if (product.getWishlist() == this) {
+            product.setWishlist(null);
+        }
+    }
 }
