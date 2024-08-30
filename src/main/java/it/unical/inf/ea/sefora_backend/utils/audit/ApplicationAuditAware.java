@@ -1,6 +1,6 @@
 package it.unical.inf.ea.sefora_backend.utils.audit;
 
-import it.unical.inf.ea.sefora_backend.entities.User;
+import it.unical.inf.ea.sefora_backend.entities.Account;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,7 +22,7 @@ public class ApplicationAuditAware implements AuditorAware<Long> {
             return Optional.empty();
         }
 
-        User userPrincipal = (User) authentication.getPrincipal();
-        return Optional.ofNullable(userPrincipal.getId());
+        Account accountPrincipal = (Account) authentication.getPrincipal();
+        return Optional.ofNullable(accountPrincipal.getId());
     }
 }
