@@ -1,14 +1,17 @@
 package it.unical.inf.ea.sefora_backend.service;
 
 import it.unical.inf.ea.sefora_backend.dao.ProductDao;
-import it.unical.inf.ea.sefora_backend.dao.UserDao;
+import it.unical.inf.ea.sefora_backend.dao.AccountDao;
 import it.unical.inf.ea.sefora_backend.dto.ProductDto;
 import it.unical.inf.ea.sefora_backend.entities.Product;
-import it.unical.inf.ea.sefora_backend.entities.User;
+import it.unical.inf.ea.sefora_backend.entities.Account;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,7 +23,7 @@ public class ProductServiceImpl implements ProductService {
     private ProductDao productDao;
 
     @Autowired
-    private UserDao userDao;
+    private AccountDao accountDao;
 
     private ProductDto convertToDto(Product product) {
         ProductDto productDto = new ProductDto();
@@ -28,8 +31,7 @@ public class ProductServiceImpl implements ProductService {
         productDto.setName(product.getName());
         productDto.setDescription(product.getDescription());
         productDto.setPrice(product.getPrice());
-        productDto.setQuantity(product.getQuantity());
-        productDto.setUserProductId(product.getUserProduct().getId());
+        productDto.setUserProductId(product.getProductAccount().getId());
         productDto.setImageProduct(product.getImageProduct());
         productDto.setCategory(product.getCategory());
         return productDto;
@@ -37,14 +39,13 @@ public class ProductServiceImpl implements ProductService {
 
     private Product convertToEntity(ProductDto productDto) {
         Product product = new Product();
-        User user = userDao.findById(productDto.getUserProductId())
+        Account account = accountDao.findById(productDto.getUserProductId())
                 .orElseThrow(() -> new RuntimeException("User not found!"));
-        product.setUserProduct(user);
+        product.setProductAccount(account);
         product.setId(productDto.getId());
         product.setName(productDto.getName());
         product.setDescription(productDto.getDescription());
         product.setPrice(productDto.getPrice());
-        product.setQuantity(productDto.getQuantity());
         product.setImageProduct(productDto.getImageProduct());
         product.setCategory(productDto.getCategory());
         return product;
@@ -60,10 +61,7 @@ public class ProductServiceImpl implements ProductService {
         if (productDTO.getPrice() < 0)
             throw new RuntimeException("Product price cannot be negative!");
 
-        if (productDTO.getQuantity() < 0)
-            throw new RuntimeException("Product quantity cannot be negative!");
-
-        if (userDao.findById(productDTO.getUserProductId()).isEmpty())
+        if (accountDao.findById(productDTO.getUserProductId()).isEmpty())
             throw new RuntimeException("User not found!");
     }
 
@@ -76,7 +74,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> getAllProductsByOwner(Long id) {
-        return productDao.findAllByUserProduct_Id(id)
+        return productDao.findAllByProductAccount_Id(id)
+                .stream().map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductDto> findProductsByCurrentUser(Principal currentUser) {
+        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
+        return productDao.findAllByProductAccount_Id(user.getId())
                 .stream().map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -96,6 +102,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public void deleteProduct(Long id) {
         if (productDao.findById(id).isEmpty())
             throw new RuntimeException("Product not found!");

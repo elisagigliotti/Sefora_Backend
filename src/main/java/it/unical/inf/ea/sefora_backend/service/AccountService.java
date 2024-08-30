@@ -2,8 +2,8 @@ package it.unical.inf.ea.sefora_backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unical.inf.ea.sefora_backend.dao.TokenDao;
-import it.unical.inf.ea.sefora_backend.dao.UserDao;
-import it.unical.inf.ea.sefora_backend.dto.UserDto;
+import it.unical.inf.ea.sefora_backend.dao.AccountDao;
+import it.unical.inf.ea.sefora_backend.dto.AccountDto;
 import it.unical.inf.ea.sefora_backend.entities.Account;
 import it.unical.inf.ea.sefora_backend.entities.ChangePasswordRequest;
 import it.unical.inf.ea.sefora_backend.entities.token.Token;
@@ -27,23 +27,23 @@ import java.security.Principal;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class AccountService {
 
     private final PasswordEncoder passwordEncoder;
-    private final UserDao dao;
+    private final AccountDao dao;
     private final TokenDao tokenDao;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    static UserDto convertToDto(Account account) {
-        UserDto userDto = new UserDto();
-        userDto.setId(account.getId());
-        userDto.setFirstname(account.getFirstname());
-        userDto.setLastname(account.getLastname());
-        userDto.setEmail(account.getEmail());
-        userDto.setRole(account.getRole());
-        userDto.setBanned(account.getBanned());
-        return userDto;
+    static AccountDto convertToDto(Account account) {
+        AccountDto accountDto = new AccountDto();
+        accountDto.setId(account.getId());
+        accountDto.setFirstname(account.getFirstname());
+        accountDto.setLastname(account.getLastname());
+        accountDto.setEmail(account.getEmail());
+        accountDto.setRole(account.getRole());
+        accountDto.setBanned(account.getBanned());
+        return accountDto;
     }
 
     public void changePassword(ChangePasswordRequest request, Principal currentUser) {
@@ -170,7 +170,7 @@ public class UserService {
         }
     }
 
-    public void updateUser(UserDto request, Principal connectedUser) {
+    public void updateUser(AccountDto request, Principal connectedUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
@@ -185,7 +185,7 @@ public class UserService {
         revokeAllUserTokens(user);
     }
 
-    public UserDto getConnectedUser(Principal connectedUser) {
+    public AccountDto getConnectedUser(Principal connectedUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) connectedUser).getPrincipal();
         return convertToDto(user);
     }
@@ -222,7 +222,7 @@ public class UserService {
         dao.delete(user);
     }
 
-    public UserDto getUserById(Long userId) {
+    public AccountDto getUserById(Long userId) {
         var user = dao.findById(userId)
                 .orElseThrow();
         return convertToDto(user);

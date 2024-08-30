@@ -1,14 +1,16 @@
 package it.unical.inf.ea.sefora_backend.service;
 
-import it.unical.inf.ea.sefora_backend.dao.CartDao;
-import it.unical.inf.ea.sefora_backend.dao.OrderDao;
-import it.unical.inf.ea.sefora_backend.dao.ProductDao;
 import it.unical.inf.ea.sefora_backend.dao.AccountDao;
-import it.unical.inf.ea.sefora_backend.dto.OrderDto;
+import it.unical.inf.ea.sefora_backend.dao.CartDao;
+import it.unical.inf.ea.sefora_backend.dao.ProductDao;
+import it.unical.inf.ea.sefora_backend.dao.PurchaseDao;
 import it.unical.inf.ea.sefora_backend.dto.ProductShortDto;
+import it.unical.inf.ea.sefora_backend.dto.PurchaseDto;
 import it.unical.inf.ea.sefora_backend.entities.Account;
-import it.unical.inf.ea.sefora_backend.entities.Purchases;
+import it.unical.inf.ea.sefora_backend.entities.Cart;
 import it.unical.inf.ea.sefora_backend.entities.Product;
+import it.unical.inf.ea.sefora_backend.entities.Purchase;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -21,10 +23,10 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
-public class OrderServiceImpl implements OrderService {
+public class PurchaseServiceImpl implements PurchaseService {
 
     @Autowired
-    private OrderDao orderDao;
+    private PurchaseDao purchaseDao;
 
     @Autowired
     private AccountDao accountDao;
@@ -35,90 +37,138 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private CartDao cartDao;
 
-    private OrderDto convertToDto(Purchases purchases) {
-        OrderDto orderDto = new OrderDto();
+    private Purchase convertToEntity(PurchaseDto purchaseDto) {
+        Purchase purchase = new Purchase();
+        purchase.setPurchaseProducts(new ArrayList<>());
+        Account account = accountDao.findById(purchaseDto.getUserPurchaseId()).orElseThrow(() -> new RuntimeException("User not found!"));
+        purchase.setPurchaseAccount(account);
+        purchase.setPurchaseDate(purchaseDto.getPurchaseDate());
+        purchase.setTotalPurchasePrice(purchaseDto.getTotalPurchasePrice());
 
-        Long userId = accountDao.findById(purchases.getPurchaseAccount().getId()).orElseThrow(() -> new RuntimeException("User not found!")).getId();
-        orderDto.setUserOrderId(userId);
-
-        orderDto.setPurchaseDate(purchases.getPurchaseDate());
-        orderDto.setTotalOrderPrice(purchases.getTotalOrderPrice());
-
-        if(orderDto.getProducts() == null)
-            orderDto.setProducts(new ArrayList<>());
-
-        for (Product product : purchases.getPurchaseProducts()) {
-            if (productDao.findById(product.getId()).isEmpty())
-                throw new RuntimeException("Product not found!");
-
-            ProductShortDto productShortDto = new ProductShortDto();
-            productShortDto.setId(product.getId());
-            productShortDto.setName(product.getName());
-            productShortDto.setPrice(product.getPrice());
-            orderDto.getProducts().add(productShortDto);
-        }
-
-        orderDto.setId(purchases.getId());
-        return orderDto;
-    }
-
-    private Purchases convertToEntity(OrderDto orderDto) {
-        Purchases purchases = new Purchases();
-        purchases.setPurchaseProducts(new ArrayList<>());
-        Account account = accountDao.findById(orderDto.getUserOrderId()).orElseThrow(() -> new RuntimeException("User not found!"));
-        purchases.setPurchaseAccount(account);
-        purchases.setPurchaseDate(orderDto.getPurchaseDate());
-        purchases.setTotalOrderPrice(orderDto.getTotalOrderPrice());
-
-        if(purchases.getPurchaseProducts() == null)
-            purchases.setPurchaseProducts(new ArrayList<>());
-
-        System.out.println(orderDto.getProducts());
-        for (ProductShortDto productShortDto : orderDto.getProducts()) {
+        List<Product> products = new ArrayList<>();
+        for (ProductShortDto productShortDto : purchaseDto.getProducts()) {
             Product product = productDao.findById(productShortDto.getId()).orElseThrow(() -> new RuntimeException("Product not found!"));
-            purchases.getPurchaseProducts().add(product);
+            products.add(product);
         }
 
-        purchases.setId(orderDto.getId());
-        return purchases;
+        purchase.setPurchaseProducts(products);
+        purchase.setId(purchaseDto.getId());
+        return purchase;
     }
+
+
+
+    private PurchaseDto convertToDto(Purchase purchase) {
+        PurchaseDto dto = new PurchaseDto();
+        dto.setId(purchase.getId());
+        dto.setUserPurchaseId(purchase.getPurchaseAccount().getId());
+        dto.setPurchaseDate(purchase.getPurchaseDate());
+        dto.setTotalPurchasePrice(purchase.getTotalPurchasePrice());
+        dto.setProducts(purchase.getPurchaseProducts().stream()
+                .map(product -> {
+                    ProductShortDto productDto = new ProductShortDto();
+                    productDto.setId(product.getId());
+                    productDto.setName(product.getName());
+                    productDto.setPrice(product.getPrice());
+                    return productDto;
+                })
+                .collect(Collectors.toList()));
+        return dto;
+    }
+
+
 
     @Override
-    public List<OrderDto> findOrdersByUserId(Long id) {
-        return orderDao.findAllByOrderAccount_Id(id).stream()
+    @Transactional
+    public PurchaseDto createOrderFromCartId(Long cartId, Principal currentUser) {
+        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
+        Cart cart = cartDao.findByIdWithProducts(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart not found with ID: " + cartId));
+
+        // Create a new Purchase entity
+        Purchase purchase = new Purchase();
+        purchase.setPurchaseAccount(user);
+        purchase.setPurchaseDate(LocalDate.now());
+        purchase.setTotalPurchasePrice(cart.getCartProducts().stream().mapToDouble(Product::getPrice).sum());
+
+        // Add products to the purchase
+        for (Product product : cart.getCartProducts()) {
+            purchase.addProduct(product);
+        }
+
+        for (Product product : cart.getCartProducts()) {
+            product.setCart(null);
+        }
+
+        // Save the purchase
+        Purchase savedPurchase = purchaseDao.save(purchase);
+
+       //cart.getCartProducts().clear();
+
+        // Optionally, delete the cart if you want to remove it from the database
+        //cartDao.delete(cart);
+
+        // Alternatively, if you want to keep the cart but clear it
+       //cartDao.save(cart);
+
+        // Log before clearing cart
+        System.out.println("Cart before clearing: " + cart.getCartProducts());
+
+        cart.getCartProducts().clear();
+        cartDao.save(cart);  // Ensure changes to the cart are saved
+
+        // Log after clearing cart
+        System.out.println("Cart after clearing: " + cart.getCartProducts());
+
+        // Convert saved Purchase entity back to PurchaseDto to return
+        PurchaseDto purchaseDto = convertToDto(savedPurchase);
+        return purchaseDto;
+    }
+
+
+
+
+    @Override
+    public List<PurchaseDto> findOrdersByUserId(Long id) {
+        return purchaseDao.findAllByPurchaseAccount_Id(id).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public OrderDto createOrder(OrderDto orderDto, Principal currentUser) {
+    public PurchaseDto createOrder(PurchaseDto purchaseDto, Principal currentUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-
-        if (!Objects.equals(user.getId(), orderDto.getUserOrderId()))
+        if (!Objects.equals(user.getId(), purchaseDto.getUserPurchaseId()))
             throw new RuntimeException("User not allowed to create order for another user!");
 
-        Purchases purchases = convertToEntity(orderDto);
-        return convertToDto(orderDao.save(purchases));
+        Purchase purchase = convertToEntity(purchaseDto);
+
+        List<Product> productsToAdd = new ArrayList<>(purchase.getPurchaseProducts());
+
+        purchase.getPurchaseProducts().clear();
+
+        for(Product product : productsToAdd) {
+            if(productDao.findById(product.getId()).isEmpty())
+                throw new RuntimeException("Product not found!");
+
+            purchase.addProduct(product);
+        }
+
+        return convertToDto(purchaseDao.save(purchase));
     }
 
     @Override
-    public void createOrderFromCartId(Long cartId, Principal currentUser) {
+    public List<PurchaseDto> findOrdersByCurrentUser(Principal currentUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        var cart = cartDao.findById(cartId).orElseThrow(() -> new RuntimeException("Cart not found!"));
+        if(user == null)
+            throw new RuntimeException("User not found!");
 
-        Purchases purchases = new Purchases();
-        purchases.setPurchaseAccount(user);
-        purchases.setPurchaseDate(LocalDate.now());
-        purchases.setTotalOrderPrice(cart.getCartProducts().stream().mapToDouble(Product::getPrice).sum());
-        purchases.setPurchaseProducts(cart.getCartProducts());
-        convertToDto(orderDao.save(purchases));
-    }
+        var purchases = findOrdersByUserId(user.getId());
+        if(purchases.isEmpty())
+            throw new RuntimeException("No orders found for user with ID: " + user.getId());
 
-    @Override
-    public List<OrderDto> findOrdersByCurrentUser(Principal currentUser) {
-        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        return orderDao.findAllByOrderAccount_Id(user.getId()).stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        System.out.println("Purchases: " + purchases);
+
+        return purchases;
     }
 }
