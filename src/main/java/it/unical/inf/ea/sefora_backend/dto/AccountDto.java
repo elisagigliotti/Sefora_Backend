@@ -9,7 +9,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class UserDto {
+public class AccountDto {
     private Long id;
     @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String firstname;
@@ -27,7 +27,7 @@ public class UserDto {
     private String profileImage;
     private Long cartId;
     private List<WishlistDto> wishlistsDto;
-    private List<OrderDto> ordersDto;
+    private List<PurchaseDto> purchaseDto;
     private List<ProductDto> productsDto;
 
 }

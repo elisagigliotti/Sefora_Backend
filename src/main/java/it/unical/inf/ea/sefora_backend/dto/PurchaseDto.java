@@ -8,20 +8,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class OrderDto {
+public class PurchaseDto {
     private Long id;
 
     @NotNull
-    private Long userOrderId;
+    private Long userPurchaseId;
     @PastOrPresent
     private LocalDate purchaseDate;
     @PositiveOrZero
-    private double totalOrderPrice;
+    private double totalPurchasePrice;
     @NotEmpty
-    private List<ProductShortDto> products = new ArrayList<>();
+    private List<ProductShortDto> products;
 }

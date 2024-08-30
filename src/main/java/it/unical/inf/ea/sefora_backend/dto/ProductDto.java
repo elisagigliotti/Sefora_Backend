@@ -23,12 +23,10 @@ public class ProductDto {
     private String description;
     @Min(value = 0, message = "Price must be greater than or equal to 0")
     private Float price;
-    @NotNull
-    @Min(value = 0, message = "Quantity must be greater than or equal to 0")
-    private Long quantity;
+
     @NotNull
     private Category category;
-    @NotEmpty
+
     private String imageProduct;
     @NotNull
     private Long userProductId;

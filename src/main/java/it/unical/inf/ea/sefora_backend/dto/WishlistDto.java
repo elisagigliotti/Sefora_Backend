@@ -1,10 +1,12 @@
 package it.unical.inf.ea.sefora_backend.dto;
 
 import it.unical.inf.ea.sefora_backend.entities.WishlistType;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -14,8 +16,8 @@ public class WishlistDto {
     @NotNull
     private Long userWishlistId;
 
-    @NotNull
-    private List<WishlistProductDto> wishlistProducts;
+    @NotEmpty
+    private List<ProductShortDto> products;
 
     @Size(min = 3, max = 50, message = "Name must be between 3 and 50 characters")
     private String name;
@@ -23,7 +25,5 @@ public class WishlistDto {
     @NotNull
     private WishlistType type;
 
-    private List<UserDto> sharedWithUsers;
-
-    private String shareableLink;
+    private List<AccountShortDto> sharedWithUsers;
 }

@@ -4,14 +4,12 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.util.List;
-
 @Data
-public class CartDto {
-
-    private Long id;
+public class AccountShortDto {
     @NotNull
-    private Long userCartId;
+    private Long id;
     @NotEmpty
-    private List<ProductShortDto> products;
+    private String email;
+    @NotEmpty
+    private String firstname;
 }
