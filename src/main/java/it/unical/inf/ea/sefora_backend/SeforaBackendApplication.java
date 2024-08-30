@@ -1,6 +1,6 @@
 package it.unical.inf.ea.sefora_backend;
 
-import it.unical.inf.ea.sefora_backend.service.UserService;
+import it.unical.inf.ea.sefora_backend.service.AccountService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,7 +16,7 @@ public class SeforaBackendApplication {
     }
 
     @Bean
-    public CommandLineRunner commandLineRunner(UserService service) {
+    public CommandLineRunner commandLineRunner(AccountService service) {
         return args -> { /*
             var admin = RegisterRequest.builder()
                     .firstname("Admin")
