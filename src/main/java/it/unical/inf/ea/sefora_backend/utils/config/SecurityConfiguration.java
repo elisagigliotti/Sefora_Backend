@@ -11,13 +11,12 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
-import static org.springframework.security.config.Customizer.withDefaults;
 import static org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED;
 
 @Configuration
@@ -27,7 +26,6 @@ import static org.springframework.security.config.http.SessionCreationPolicy.IF_
 public class SecurityConfiguration {
 
     private static final String[] WHITE_LIST_URL = {
-            "/api/**",
             "/swagger-resources",
             "/swagger-resources/**",
             "/configuration/ui",
@@ -40,10 +38,10 @@ public class SecurityConfiguration {
             "/swagger-ui.html",
             "/oauth2/authorization/google",
             "/login/oauth2/code/google",
-            "/api/product/all",
-            "/api/product/user/**",
-            "/api/users/**",
-            "/api/product/product/**",
+            "/api/account/register",
+            "/api/account/authenticate",
+            "/api/products/all",
+            "/api/products/user/**",
     };
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -62,7 +60,7 @@ public class SecurityConfiguration {
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout -> logout
-                        .logoutUrl("/api/v1/auth/logout")
+                        .logoutUrl("/api/account/logout")
                         .addLogoutHandler(logoutHandler)
                         .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
                 )
@@ -70,10 +68,10 @@ public class SecurityConfiguration {
                         .authenticationEntryPoint(new HttpStatusEntryPoint(UNAUTHORIZED))
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/api/users/login-success", true)
-                        .failureUrl("/api/users/login-failure")
-                        .successHandler(new SimpleUrlAuthenticationSuccessHandler("/api/users/login-success"))
-                        .failureHandler(new SimpleUrlAuthenticationFailureHandler("/api/users/login-failure"))
+                        .defaultSuccessUrl("/api/account/login-success", true)
+                        .failureUrl("/api/account/login-failure")
+                        .successHandler(new SimpleUrlAuthenticationSuccessHandler("/api/account/login-success"))
+                        .failureHandler(new SimpleUrlAuthenticationFailureHandler("/api/account/login-failure"))
                 );
         return http.build();
     }

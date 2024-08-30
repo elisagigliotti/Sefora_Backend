@@ -1,6 +1,6 @@
 package it.unical.inf.ea.sefora_backend.utils.config;
 
-import it.unical.inf.ea.sefora_backend.dao.UserDao;
+import it.unical.inf.ea.sefora_backend.dao.AccountDao;
 import it.unical.inf.ea.sefora_backend.utils.audit.ApplicationAuditAware;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @RequiredArgsConstructor
 public class ApplicationConfig {
 
-    private final UserDao dao;
+    private final AccountDao dao;
 
     @Bean
     public UserDetailsService userDetailsService() {
