@@ -40,8 +40,8 @@ public class SecurityConfiguration {
             "/login/oauth2/code/google",
             "/api/account/register",
             "/api/account/authenticate",
-            "/api/products/all",
-            "/api/products/user/**",
+            "/api/product/all",
+            "/api/product/user/**",
     };
 
     private final JwtAuthenticationFilter jwtAuthFilter;
