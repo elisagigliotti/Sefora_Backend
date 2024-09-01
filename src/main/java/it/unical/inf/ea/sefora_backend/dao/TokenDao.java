@@ -1,12 +1,14 @@
 package it.unical.inf.ea.sefora_backend.dao;
 
 import it.unical.inf.ea.sefora_backend.entities.token.Token;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
 
+@Transactional
 public interface TokenDao extends JpaRepository<Token, Long> {
 
     @Query(value = """

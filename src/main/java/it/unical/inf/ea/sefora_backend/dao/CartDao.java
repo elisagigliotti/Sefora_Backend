@@ -1,12 +1,14 @@
 package it.unical.inf.ea.sefora_backend.dao;
 
 import it.unical.inf.ea.sefora_backend.entities.Cart;
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
+@Transactional
 public interface CartDao extends JpaRepository<Cart, Long> {
 
     @Query("SELECT c FROM Cart c LEFT JOIN FETCH c.cartProducts WHERE c.id = :id")
