@@ -18,11 +18,15 @@ public interface WishlistService {
 
     List<WishlistDto> getSharedWishlists(Principal currentUser);
 
-    void addUserToWishlist(Long wishlistId, Long userId, Principal currentUser);
+    void addUserToWishlist(Long userId, Principal currentUser);
 
-    void removeUserFromWishlist(Long wishlistId, Long userId, Principal currentUser);
+    void addUserThroughEmailToWishlist(String userEmail, Principal currentUser);
 
-    void addProductToWishlist(Long wishlistId, Long productId, Principal currentUser);
+    void removeUserFromWishlist(Long userId, Principal currentUser);
 
-    void removeProductFromWishlist(Long wishlistId, Long productId, Principal currentUser);
+    void addProductToWishlist(Long productId, Principal currentUser);
+
+    void removeProductFromWishlist(Long productId, Principal currentUser);
+
+    List<WishlistDto> getAllAccessibleWishlists(Principal currentUser);
 }

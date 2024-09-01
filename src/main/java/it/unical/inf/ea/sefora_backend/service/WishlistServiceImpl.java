@@ -1,14 +1,15 @@
 package it.unical.inf.ea.sefora_backend.service;
 
-import it.unical.inf.ea.sefora_backend.dao.ProductDao;
 import it.unical.inf.ea.sefora_backend.dao.AccountDao;
+import it.unical.inf.ea.sefora_backend.dao.ProductDao;
 import it.unical.inf.ea.sefora_backend.dao.WishlistDao;
-import it.unical.inf.ea.sefora_backend.dto.ProductShortDto;
 import it.unical.inf.ea.sefora_backend.dto.AccountShortDto;
+import it.unical.inf.ea.sefora_backend.dto.ProductDto;
 import it.unical.inf.ea.sefora_backend.dto.WishlistDto;
 import it.unical.inf.ea.sefora_backend.entities.Account;
 import it.unical.inf.ea.sefora_backend.entities.Product;
 import it.unical.inf.ea.sefora_backend.entities.Wishlist;
+import it.unical.inf.ea.sefora_backend.entities.WishlistType;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +19,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class WishlistServiceImpl implements WishlistService {
@@ -31,54 +33,78 @@ public class WishlistServiceImpl implements WishlistService {
     @Autowired
     private ProductDao productDao;
 
+    @Autowired
+    private AccountDao userDao;
 
-    private WishlistDto convertToDto(Wishlist wishlist) {
+    @Transactional
+    protected WishlistDto convertToDto(Wishlist wishlist) {
         WishlistDto wishlistDto = new WishlistDto();
         wishlistDto.setId(wishlist.getId());
         wishlistDto.setName(wishlist.getName());
         wishlistDto.setType(wishlist.getType());
-        wishlistDto.setUserWishlistId(wishlist.getWishlistAccount().getId());
+
+        if(accountDao.findById(wishlist.getWishlistAccount().getId()).isEmpty())
+            throw new RuntimeException("User not found!");
+        AccountShortDto owner = AccountShortDto.builder()
+                .id(wishlist.getWishlistAccount().getId())
+                .email(wishlist.getWishlistAccount().getEmail())
+                .firstname(wishlist.getWishlistAccount().getFirstname())
+                .profileImage(wishlist.getWishlistAccount().getProfileImage())
+                .role(wishlist.getWishlistAccount().getRole())
+                .isBanned(wishlist.getWishlistAccount().getBanned())
+                .build();
+
+        wishlistDto.setAccount(owner);
 
         // Convert products to DTO
-        List<ProductShortDto> productDtos = new ArrayList<>();
+        List<ProductDto> productDtos = new ArrayList<>();
         for (Product product : wishlist.getWishlistProducts()) {
             if(productDao.findById(product.getId()).isEmpty())
                 throw new RuntimeException("Product not found!");
 
-            ProductShortDto productShortDto = new ProductShortDto();
-            productShortDto.setId(product.getId());
-            productShortDto.setName(product.getName());
-            productShortDto.setPrice(product.getPrice());
-            productDtos.add(productShortDto);
+            ProductDto productDto = ProductDto.builder()
+                    .id(product.getId())
+                    .name(product.getName())
+                    .description(product.getDescription())
+                    .price(product.getPrice())
+                    .userProductId(product.getProductAccount().getId())
+                    .category(product.getCategory())
+                    .imageProduct(product.getImageProduct())
+                    .build();
+            productDtos.add(productDto);
         }
         wishlistDto.setProducts(productDtos);
 
         // Convert shared users to DTO
         List<AccountShortDto> sharedUserDtos = new ArrayList<>();
         for (Account account : wishlist.getSharedWithUsers()) {
-            AccountShortDto accountShortDto = new AccountShortDto();
-            accountShortDto.setId(account.getId());
-            accountShortDto.setEmail(account.getEmail());
-            accountShortDto.setFirstname(account.getFirstname());
-            sharedUserDtos.add(accountShortDto);
+            AccountShortDto sharedUserDto = AccountShortDto.builder()
+                    .id(account.getId())
+                    .email(account.getEmail())
+                    .firstname(account.getFirstname())
+                    .profileImage(account.getProfileImage())
+                    .role(account.getRole())
+                    .isBanned(account.getBanned())
+                    .build();
+            sharedUserDtos.add(sharedUserDto);
         }
         wishlistDto.setSharedWithUsers(sharedUserDtos);
-
         return wishlistDto;
     }
 
-    private Wishlist convertToEntity(WishlistDto wishlistDto) {
+    @Transactional
+    protected Wishlist convertToEntity(WishlistDto wishlistDto) {
         Wishlist wishlist = new Wishlist();
         wishlist.setId(wishlistDto.getId());
         wishlist.setName(wishlistDto.getName());
         wishlist.setType(wishlistDto.getType());
-        Account account = accountDao.findById(wishlistDto.getUserWishlistId())
+        Account account = accountDao.findById(wishlistDto.getAccount().getId())
                 .orElseThrow(() -> new RuntimeException("User not found!"));
         wishlist.setWishlistAccount(account);
 
         List<Product> products = new ArrayList<>();
-        for (ProductShortDto productShortDto : wishlistDto.getProducts()) {
-            Product product = productDao.findById(productShortDto.getId())
+        for (ProductDto productDto : wishlistDto.getProducts()) {
+            Product product = productDao.findById(productDto.getId())
                     .orElseThrow(() -> new RuntimeException("Product not found!"));
             products.add(product);
         }
@@ -96,9 +122,10 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
+    @Transactional
     public WishlistDto createWishlist(WishlistDto wishlistDto, Principal currentUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        if (!Objects.equals(wishlistDto.getUserWishlistId(), user.getId()))
+        if (!Objects.equals(wishlistDto.getAccount().getId(), user.getId()))
             throw new RuntimeException("You are not allowed to create a wishlist for another user!");
 
         Wishlist wishlist = convertToEntity(wishlistDto);
@@ -123,7 +150,7 @@ public class WishlistServiceImpl implements WishlistService {
     public void updateWishlist(WishlistDto wishlistDto, Principal currentUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
 
-        if (!Objects.equals(wishlistDto.getUserWishlistId(), user.getId())) {
+        if (!Objects.equals(wishlistDto.getAccount().getId(), user.getId())) {
             throw new RuntimeException("You are not allowed to update this wishlist!");
         }
 
@@ -136,8 +163,8 @@ public class WishlistServiceImpl implements WishlistService {
 
         // Update products
         List<Product> products = new ArrayList<>();
-        for (ProductShortDto productShortDto : wishlistDto.getProducts()) {
-            Product product = productDao.findById(productShortDto.getId())
+        for (ProductDto productDto : wishlistDto.getProducts()) {
+            Product product = productDao.findById(productDto.getId())
                     .orElseThrow(() -> new RuntimeException("Product not found!"));
             products.add(product);
         }
@@ -157,9 +184,9 @@ public class WishlistServiceImpl implements WishlistService {
                 .orElseThrow(() -> new RuntimeException("Wishlist not found!"));
 
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        if (!wishlist.getWishlistAccount().getId().equals(user.getId())) {
+        if (!wishlist.getWishlistAccount().getId().equals(user.getId()))
             throw new RuntimeException("You are not allowed to delete this wishlist!");
-        }
+
 
         wishlistDao.deleteById(id);
     }
@@ -186,28 +213,70 @@ public class WishlistServiceImpl implements WishlistService {
                 .stream().map(this::convertToDto).toList();
     }
 
-    @Override
-    public void addUserToWishlist(Long wishlistId, Long userId, Principal currentUser) {
-        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        Wishlist wishlist = wishlistDao.findById(wishlistId)
-                .orElseThrow(() -> new RuntimeException("Wishlist not found!"));
+    public Wishlist checkifWishlistExists(Account account) {
+        Account acc = userDao.findById(account.getId()).orElseThrow(() -> new RuntimeException("User not found!"));
+        Optional<Wishlist> wishlist = wishlistDao.findByWishlistAccount_Id(acc.getId());
 
-        if (!Objects.equals(wishlist.getWishlistAccount().getId(), user.getId())) {
-            throw new RuntimeException("You can't add a user to another user's wishlist!");
+        if(wishlist.isEmpty()) {
+            Wishlist newWishlist = new Wishlist();
+            newWishlist.setWishlistAccount(acc);
+            newWishlist.setName("Personal Wishlist");
+            newWishlist.setType(WishlistType.PERSONAL);
+            return wishlistDao.save(newWishlist);
+        } else {
+            return wishlist.get();
         }
+    }
+
+    @Override
+    public void addUserToWishlist(Long userId, Principal currentUser) {
+        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
+
+        Wishlist wishlist = checkifWishlistExists(user);
+
+        if (!Objects.equals(wishlist.getWishlistAccount().getId(), user.getId()))
+            throw new RuntimeException("You can't add a user to another user's wishlist!");
 
         Account account = accountDao.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found!"));
 
+        if(wishlist.getSharedWithUsers().contains(account))
+            return;
+
         wishlist.getSharedWithUsers().add(account);
+
+        if(wishlist.getType().equals(WishlistType.PERSONAL)) wishlist.setType(WishlistType.SHARED);
+
         wishlistDao.save(wishlist);
     }
 
     @Override
-    public void removeUserFromWishlist(Long wishlistId, Long userId, Principal currentUser) {
+    public void addUserThroughEmailToWishlist(String userEmail, Principal currentUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        Wishlist wishlist = wishlistDao.findById(wishlistId)
-                .orElseThrow(() -> new RuntimeException("Wishlist not found!"));
+
+        Wishlist wishlist = checkifWishlistExists(user);
+
+        if (!Objects.equals(wishlist.getWishlistAccount().getId(), user.getId()))
+            throw new RuntimeException("You can't add a user to another user's wishlist!");
+
+        Account account = accountDao.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found!"));
+
+        if(wishlist.getSharedWithUsers().contains(account))
+            return;
+
+        wishlist.getSharedWithUsers().add(account);
+
+        if(wishlist.getType().equals(WishlistType.PERSONAL)) wishlist.setType(WishlistType.SHARED);
+
+        wishlistDao.save(wishlist);
+    }
+
+    @Override
+    public void removeUserFromWishlist(Long userId, Principal currentUser) {
+        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
+
+        Wishlist wishlist = checkifWishlistExists(user);
 
         if (!Objects.equals(wishlist.getWishlistAccount().getId(), user.getId())) {
             throw new RuntimeException("You are not allowed to remove a user from this wishlist!");
@@ -216,31 +285,40 @@ public class WishlistServiceImpl implements WishlistService {
         Account accountToRemove = accountDao.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found!"));
 
+        if(!wishlist.getSharedWithUsers().contains(accountToRemove)) return;
+
         wishlist.getSharedWithUsers().remove(accountToRemove);
+
+        if(wishlist.getSharedWithUsers().isEmpty()) wishlist.setType(WishlistType.PERSONAL);
+
         wishlistDao.save(wishlist);
     }
 
     @Override
-    public void addProductToWishlist(Long wishlistId, Long productId, Principal currentUser) {
+    public void addProductToWishlist(Long productId, Principal currentUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        Wishlist wishlist = wishlistDao.findById(wishlistId)
-                .orElseThrow(() -> new RuntimeException("Wishlist not found!"));
+
+        Wishlist wishlist = checkifWishlistExists(user);
+
         Product product = productDao.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found!"));
 
-        if (!Objects.equals(wishlist.getWishlistAccount().getId(), user.getId())) {
+        if (!Objects.equals(wishlist.getWishlistAccount().getId(), user.getId()))
             throw new RuntimeException("You can't add a product to another user's wishlist!");
-        }
+
+        if(!wishlist.getWishlistProducts().isEmpty() && wishlist.getWishlistProducts().contains(product))
+            return;
 
         wishlist.addProduct(product);
         wishlistDao.save(wishlist);
     }
 
     @Override
-    public void removeProductFromWishlist(Long wishlistId, Long productId, Principal currentUser) {
+    public void removeProductFromWishlist(Long productId, Principal currentUser) {
         var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
-        Wishlist wishlist = wishlistDao.findById(wishlistId)
-                .orElseThrow(() -> new RuntimeException("Wishlist not found!"));
+
+        Wishlist wishlist = checkifWishlistExists(user);
+
         Product product = productDao.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found!"));
 
@@ -248,7 +326,22 @@ public class WishlistServiceImpl implements WishlistService {
             throw new RuntimeException("You can't remove a product from another user's wishlist!");
         }
 
+        if(!wishlist.getWishlistProducts().isEmpty() && wishlist.getWishlistProducts().contains(product))
+            return;
+
         wishlist.removeProduct(product);
         wishlistDao.save(wishlist);
+    }
+
+    @Override
+    @Transactional
+    public List<WishlistDto> getAllAccessibleWishlists(Principal currentUser) {
+        if(currentUser == null)
+            throw new RuntimeException("You are not logged in!");
+
+        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
+        var user1 = userDao.findById(user.getId()).orElseThrow(() -> new RuntimeException("User not found!"));
+        return wishlistDao.findAllAccessibleWishlistsByAccountId(user1.getId())
+                .stream().map(this::convertToDto).toList();
     }
 }

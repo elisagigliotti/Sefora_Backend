@@ -1,5 +1,6 @@
 package it.unical.inf.ea.sefora_backend.controller;
 
+import it.unical.inf.ea.sefora_backend.dto.ProductShortDto;
 import it.unical.inf.ea.sefora_backend.dto.WishlistDto;
 import it.unical.inf.ea.sefora_backend.service.WishlistService;
 import jakarta.validation.Valid;
@@ -50,26 +51,37 @@ public class WishlistController {
     }
 
     @PatchMapping("/addUser")
-    public ResponseEntity<String> addUserToWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("userId") Long userId, Principal currentUser) {
-        wishlistService.addUserToWishlist(wishlistId, userId, currentUser);
+    public ResponseEntity<String> addUserToWishlist(@RequestParam("userId") Long userId, Principal currentUser) {
+        wishlistService.addUserToWishlist(userId, currentUser);
+        return ResponseEntity.ok("User added to wishlist!");
+    }
+
+    @PatchMapping("/addUserByEmail")
+    public ResponseEntity<String> addUserThroughEmailToWishlist(@RequestParam("userEmail") String userEmail, Principal currentUser) {
+        wishlistService.addUserThroughEmailToWishlist(userEmail, currentUser);
         return ResponseEntity.ok("User added to wishlist!");
     }
 
     @PatchMapping("/removeUser")
-    public ResponseEntity<String> removeUserFromWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("userId") Long userId, Principal currentUser) {
-        wishlistService.removeUserFromWishlist(wishlistId, userId, currentUser);
+    public ResponseEntity<String> removeUserFromWishlist(@RequestParam("userId") Long userId, Principal currentUser) {
+        wishlistService.removeUserFromWishlist(userId, currentUser);
         return ResponseEntity.ok("User removed from wishlist!");
     }
 
     @PatchMapping("/addProduct")
-    public ResponseEntity<String> addProductToWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("productId") Long productId, Principal currentUser) {
-        wishlistService.addProductToWishlist(wishlistId, productId, currentUser);
+    public ResponseEntity<String> addProductToWishlist(@RequestParam("productId") Long productId, Principal currentUser) {
+        wishlistService.addProductToWishlist(productId, currentUser);
         return ResponseEntity.ok("Product added to wishlist!");
     }
 
     @PatchMapping("/removeProduct")
-    public ResponseEntity<String> removeProductFromWishlist(@RequestParam("wishlistId") Long wishlistId, @RequestParam("productId") Long productId, Principal currentUser) {
-        wishlistService.removeProductFromWishlist(wishlistId, productId, currentUser);
+    public ResponseEntity<String> removeProductFromWishlist(@RequestParam("productId") Long productId, Principal currentUser) {
+        wishlistService.removeProductFromWishlist(productId, currentUser);
         return ResponseEntity.ok("Product removed from wishlist!");
+    }
+
+    @GetMapping("/accessible")
+    public ResponseEntity<List<WishlistDto>> getAllAccessibleWishlists(Principal currentUser) {
+        return ResponseEntity.ok(wishlistService.getAllAccessibleWishlists(currentUser));
     }
 }

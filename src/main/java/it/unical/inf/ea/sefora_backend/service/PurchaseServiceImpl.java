@@ -163,12 +163,23 @@ public class PurchaseServiceImpl implements PurchaseService {
         if(user == null)
             throw new RuntimeException("User not found!");
 
-        var purchases = findOrdersByUserId(user.getId());
-        if(purchases.isEmpty())
-            throw new RuntimeException("No orders found for user with ID: " + user.getId());
+        return findOrdersByUserId(user.getId());
+    }
 
-        System.out.println("Purchases: " + purchases);
+    @Override
+    public PurchaseDto convertProductToPurchase(Long id, Principal currentUser) {
+        var user = (Account) ((UsernamePasswordAuthenticationToken) currentUser).getPrincipal();
+        if(user == null)
+            throw new RuntimeException("User not found!");
 
-        return purchases;
+        Product product = productDao.findById(id).orElseThrow(() -> new RuntimeException("Product not found!"));
+
+        Purchase purchase = new Purchase();
+        purchase.setPurchaseAccount(user);
+        purchase.setPurchaseDate(LocalDate.now());
+        purchase.setTotalPurchasePrice(product.getPrice());
+        purchase.addProduct(product);
+
+        return convertToDto(purchaseDao.save(purchase));
     }
 }

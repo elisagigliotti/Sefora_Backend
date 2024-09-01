@@ -23,11 +23,9 @@ public class AccountDto {
     private String phone;
     @NotNull
     private Boolean banned;
-    @NotEmpty
     private String profileImage;
     private Long cartId;
-    private List<WishlistDto> wishlistsDto;
+    private WishlistDto wishlistDto;
     private List<PurchaseDto> purchaseDto;
     private List<ProductDto> productsDto;
-
 }

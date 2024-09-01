@@ -3,7 +3,6 @@ package it.unical.inf.ea.sefora_backend.entities;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,7 +26,7 @@ public class Wishlist {
     private List<Product> wishlistProducts;
 
     @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wishlist_account_id", nullable = false)
     private Account wishlistAccount;
 

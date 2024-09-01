@@ -1,6 +1,7 @@
 package it.unical.inf.ea.sefora_backend.controller;
 
 import it.unical.inf.ea.sefora_backend.dto.AccountDto;
+import it.unical.inf.ea.sefora_backend.dto.AccountShortDto;
 import it.unical.inf.ea.sefora_backend.entities.ChangePasswordRequest;
 import it.unical.inf.ea.sefora_backend.service.AccountService;
 import it.unical.inf.ea.sefora_backend.utils.auth.AuthenticationRequest;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/account")
@@ -35,26 +37,26 @@ public class AccountController {
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request,
-            Principal connectedUser
+            Principal connectedAccount
     ) {
         return ResponseEntity.ok(service.authenticate(request));
     }
 
     @PostMapping("/refresh-token")
-    public void refreshToken(
+    public ResponseEntity<AuthenticationResponse> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response
     ) throws IOException {
-        service.refreshToken(request, response);
+        return ResponseEntity.ok(service.refreshToken(request, response));
     }
 
     @PatchMapping
     public ResponseEntity<?> changePassword(
             @RequestBody ChangePasswordRequest request,
-            Principal connectedUser
+            Principal connectedAccount
     ) {
-        service.changePassword(request, connectedUser);
-        return ResponseEntity.ok().build();
+        service.changePassword(request, connectedAccount);
+        return ResponseEntity.ok("Password changed successfully!");
     }
 
     @GetMapping("/login-success")
@@ -68,58 +70,92 @@ public class AccountController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updateUser(
+    public ResponseEntity<AuthenticationResponse> updateAccount(
             @RequestBody AccountDto request,
-            Principal connectedUser
+            Principal connectedAccount
     ) {
-        service.updateUser(request, connectedUser);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(service.updateAccount(request, connectedAccount));
     }
 
     @GetMapping("/logout")
-    public ResponseEntity<?> logout(Principal connectedUser) {
-        service.logout(connectedUser);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> logout(Principal connectedAccount) {
+        service.logout(connectedAccount);
+        return ResponseEntity.ok("Logged out successfully!");
     }
 
     @GetMapping("/current")
-    public ResponseEntity<AccountDto> getConnectedUser(Principal connectedUser) {
-        return ResponseEntity.ok(service.getConnectedUser(connectedUser));
+    public ResponseEntity<AccountDto> getConnectedAccount(Principal connectedAccount) {
+        return ResponseEntity.ok(service.getConnectedAccount(connectedAccount));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/ban/{userId}")
-    public ResponseEntity<?> banUser(
-            @PathVariable Long userId,
-            Principal connectedUser
+    @PatchMapping("/ban/{accountId}")
+    public ResponseEntity<?> banAccount(
+            @PathVariable Long accountId,
+            Principal connectedAccount
     ) {
-        service.banUser(userId, connectedUser);
+        service.banAccount(accountId, connectedAccount);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/unban/{userId}")
-    public ResponseEntity<?> unbanUser(
-            @PathVariable Long userId,
-            Principal connectedUser
+    @PatchMapping("/unban/{accountId}")
+    public ResponseEntity<?> unbanAccount(
+            @PathVariable Long accountId,
+            Principal connectedAccount
     ) {
-        service.unbanUser(userId, connectedUser);
+        service.unbanAccount(accountId, connectedAccount);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/delete/{userId}")
-    public ResponseEntity<?> deleteUser(
-            @PathVariable Long userId
+    @DeleteMapping("/delete/{accountId}")
+    public ResponseEntity<?> deleteAccount(
+            @PathVariable Long accountId
     ) {
-        service.deleteUser(userId);
+        service.deleteAccount(accountId);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<AccountDto> getUserById(
-            @PathVariable Long userId
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/makeAdmin/{accountId}")
+    public ResponseEntity<?> makeAdmin(
+            @PathVariable Long accountId,
+            Principal connectedAccount
     ) {
-        return ResponseEntity.ok(service.getUserById(userId));
+        service.makeAdmin(accountId, connectedAccount);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/removeAdmin/{accountId}")
+    public ResponseEntity<?> removeAdmin(
+            @PathVariable Long accountId,
+            Principal connectedAccount
+    ) {
+        service.removeAdmin(accountId, connectedAccount);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all")
+    public ResponseEntity<List<AccountShortDto>> getAllAccounts() {
+        return ResponseEntity.ok(service.getAllAccount());
+    }
+
+    @GetMapping("/{accountId}")
+    public ResponseEntity<AccountDto> getAccountById(
+            @PathVariable Long accountId
+    ) {
+        return ResponseEntity.ok(service.getAccountById(accountId));
+    }
+
+    @PatchMapping("/update-image")
+    public ResponseEntity<String> updateImage(
+            @RequestBody AccountShortDto shortDto,
+            Principal connectedAccount
+    ){
+        service.updateImage(shortDto, connectedAccount);
+        return ResponseEntity.ok("Image updated successfully!");
     }
 }

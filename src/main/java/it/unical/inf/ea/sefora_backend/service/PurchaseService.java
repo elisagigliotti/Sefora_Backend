@@ -13,4 +13,6 @@ public interface PurchaseService {
     PurchaseDto createOrderFromCartId(Long cartId, Principal currentUser);
 
     List<PurchaseDto> findOrdersByCurrentUser(Principal currentUser);
+
+    PurchaseDto convertProductToPurchase(Long id, Principal currentUser);
 }

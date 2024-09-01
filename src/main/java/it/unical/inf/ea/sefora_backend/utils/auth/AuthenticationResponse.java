@@ -18,7 +18,7 @@ public class AuthenticationResponse {
     @JsonProperty("refresh_token")
     private String refreshToken;
     @JsonProperty("user")
-    private AccountDto user;
+    private AccountDto account;
     @JsonProperty("expires_in")
     private Long expiresIn;
 }

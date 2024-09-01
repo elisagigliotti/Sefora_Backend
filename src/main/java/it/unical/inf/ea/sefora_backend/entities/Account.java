@@ -54,16 +54,16 @@ public class Account implements UserDetails {
     private List<Product> accountProducts;
 
     @JsonManagedReference
+    @OneToOne(mappedBy = "wishlistAccount", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Wishlist accountWishlist = new Wishlist();
+
+    @JsonManagedReference
     @OneToOne(mappedBy = "cartAccount", cascade = CascadeType.ALL)
     private Cart accountCart;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "purchaseAccount", cascade = CascadeType.ALL) // Changed 'orderAccount' to 'purchaseAccount'
-    private List<Purchase> accountPurchases;  // Changed 'accountOrders' to 'accountPurchases'
-
-    @JsonManagedReference
-    @OneToMany(mappedBy = "wishlistAccount", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Wishlist> accountWishlists;
+    @OneToMany(mappedBy = "purchaseAccount", cascade = CascadeType.ALL)
+    private List<Purchase> accountPurchases;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
